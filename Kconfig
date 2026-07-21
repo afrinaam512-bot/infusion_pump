@@ -1,0 +1,4 @@
+mainmenu "Infusion Pump Application"
+
+source "Kconfig.zephyr"
+

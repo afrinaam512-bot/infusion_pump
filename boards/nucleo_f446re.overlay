@@ -1,0 +1,74 @@
+/{
+    aliases {
+        led0        = &green_led;
+        motor-step  = &motor_step;
+        motor-dir   = &motor_dir;
+        motor-en    = &motor_en;
+        alarm-buzz  = &buzzer_out;
+    };
+
+    leds {
+        compatible = "gpio-leds";
+        green_led: led_0 {
+            gpios = <&gpioa 6 GPIO_ACTIVE_HIGH>;
+            label = "Green LED";
+        };
+    };
+ buzzers {
+        compatible = "gpio-leds";
+        buzzer_out: buzzer_0 {
+            gpios = <&gpiob 0 GPIO_ACTIVE_HIGH>;
+            label = "Piezo Buzzer";
+        };
+    };
+
+
+
+
+
+    motor {
+        compatible = "gpio-leds";
+        motor_step: motor_step_0 {
+            gpios = <&gpiob 4 GPIO_ACTIVE_HIGH>;
+            label = "Motor STEP";
+        };
+        motor_dir: motor_dir_0 {
+            gpios = <&gpiob 5 GPIO_ACTIVE_HIGH>;
+            label = "Motor DIR";
+        };
+          motor_en: motor_en_0 {
+        gpios = <&gpioa 7 GPIO_ACTIVE_HIGH>;
+        label = "Motor EN";
+    };
+
+    };
+};
+   &i2c1 {
+    status = "okay";
+    clock-frequency = <I2C_BITRATE_FAST>;
+};
+
+&pinctrl {
+    tim2_ch1_pa0: tim2_ch1_pa0 {
+        pinmux = <STM32_PINMUX('A', 0, AF1)>;
+        bias-pull-up;
+    };
+    tim2_ch2_pa1: tim2_ch2_pa1 {
+        pinmux = <STM32_PINMUX('A', 1, AF1)>;
+        bias-pull-up;
+    };
+};
+
+
+&timers2 {
+    status = "okay";
+    st,prescaler = <0>;
+
+  qdec: qdec {
+        compatible = "st,stm32-qdec";
+        status = "okay";
+        pinctrl-0 = <&tim2_ch1_pa0 &tim2_ch2_pa1>;
+        pinctrl-names = "default";
+        st,counts-per-revolution = <600>;
+    };
+};
