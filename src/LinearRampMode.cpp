@@ -1,13 +1,13 @@
 #include "LinearRampMode.hpp"
 
 LinearRampMode::LinearRampMode(uint32_t startRateUlHr,
-                                uint32_t endRateUlHr,
-                                uint32_t stepUlHr)
+                                uint32_t endRateUlHr,                               
+ uint32_t stepUlHr)
     : startRate_(startRateUlHr)
     , endRate_(endRateUlHr)
     , stepSize_(stepUlHr)
     , currentTarget_(startRateUlHr) {}
-
+ 
 uint32_t LinearRampMode::getStartRate() const {
     return startRate_;
 }
@@ -19,9 +19,9 @@ uint32_t LinearRampMode::getEndRate() const {
 uint32_t LinearRampMode::getStepSize() const {
     return stepSize_;
 }
-
 void LinearRampMode::reset() {
     currentTarget_ = startRate_;
+    
 }
 
 uint32_t LinearRampMode::computeTargetRate() {
@@ -36,4 +36,4 @@ uint32_t LinearRampMode::computeTargetRate() {
 
 void LinearRampMode::applyRate(uint32_t rate) {
     currentRate_ = rate;
-}
+} 

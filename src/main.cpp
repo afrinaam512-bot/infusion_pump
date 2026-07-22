@@ -40,7 +40,8 @@ static const struct device *qdec_dev;
 static int32_t  g_encoderRawPrev     = 0;
 static bool     g_encoderInitialized = false;
 static int32_t  g_lastEncoderCount   = 0; // Cumulative degrees tracked
-
+static uint32_t userFlowRateUlHr  = 100000; // default 100mL/hr
+static uint32_t userDoseTargetUL  = 0;      // 0 = no target
 #define ENCODER_DEG_PER_REV  360
 #define UL_PER_REV           3200
 
@@ -49,7 +50,7 @@ static uint32_t expectedVolumeUL = 0;
 static uint32_t actualVolumeUL    = 0;
 static uint32_t volumeOffset     = 0;
 static uint32_t lastRampUpdateMs = 0;
-
+static uint32_t userMaxRampRateUlHr = 500000;
 // ── I2C / LPS22HB ────────────────────────────────
 static const struct device *i2c_dev;
 #define LPS22HB_ADDR         0x5C
@@ -152,6 +153,53 @@ static void process_command(const char* cmd) {
         printk("Mode: RAMP 10->500mL/hr\n");
         return;
     }
+  // SET_RATE <dose_mL> <rate_mL_per_hr>
+// Example: SET_RATE 10 100
+if (cmd[0]=='S' && cmd[1]=='E' && cmd[2]=='T') {
+    uint32_t dose = 0;
+    uint32_t rate = 0;
+    const char* p = cmd + 9;
+
+    // Parse dose (mL)
+    while (*p >= '0' && *p <= '9') {
+        dose = dose * 10 + (*p - '0');
+        p++;
+    }
+    while (*p == ' ') p++;
+
+    // Parse rate (mL/hr)
+    while (*p >= '0' && *p <= '9') {
+        rate = rate * 10 + (*p - '0');
+        p++;
+    }
+
+    if (dose >= 1 && dose <= 500 &&
+        rate >= 1 && rate <= 500) {
+        userDoseTargetUL = dose * 1000;
+        userFlowRateUlHr = rate * 1000;
+        userMaxRampRateUlHr  = rate * 1000;
+  rampMode = LinearRampMode(
+            10000,
+            userMaxRampRateUlHr,
+            10000);
+
+
+
+        // Update constant mode rate
+        constantMode = ConstantRateMode(
+            userFlowRateUlHr);
+
+        printk("Dose target: %lu uL (%lu mL)\n",
+            (unsigned long)userDoseTargetUL,
+            (unsigned long)dose);
+        printk("Flow rate:   %lu uL/hr (%lu mL/hr)\n",
+            (unsigned long)userFlowRateUlHr,
+            (unsigned long)rate);
+    } else {
+        printk("ERROR: dose 1-500mL rate 1-500mL/hr\n");
+    }
+    return;
+}
 
     // START
     if (cmd[0]=='S' && cmd[1]=='T' && cmd[2]=='A' && cmd[3]=='R') {
@@ -325,12 +373,22 @@ int main(void) {
         uart_irq_callback_set(uart_dev, uart_cb);
         uart_irq_rx_enable(uart_dev);
     }
+// Check target dose reached
+if (userDoseTargetUL > 0 &&
+    actualVolumeUL >= userDoseTargetUL) {
+    activeMode->stop();
+    alarm_on();
+    printk("DOSE COMPLETE!\n");
+    printk("Delivered: %lu uL\n",
+        (unsigned long)actualVolumeUL);
+    userDoseTargetUL = 0; // reset
+}
 
     printk("Ready. Commands:\n");
     printk("  CONSTANT RAMP START STOP\n");
     printk("  STATUS RESET REAL\n");
     printk("  PRESSURE <hPa>\n");
-
+   printk("  SET_RATE <mL> <mL/hr> → set dose and rate\n");
     uint32_t loop_count = 0;
 
     while (true) {
