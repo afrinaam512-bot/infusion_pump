@@ -1,16 +1,22 @@
 #pragma once
+// IT IS THE HEADERR THAT FILES CAN BE ICLUDED ONCE 
 #include "InfusionMode.hpp"
-
+// IT INCLUDES THE INFUSION MODE CLASS DECLARATION BECAUSE IT IS PARENT CLASS 
+// CREATING CHILD CLASS THAT INHERITED FROM BASE CLASS
 class ConstantRateMode : public InfusionMode {
 public:
-    explicit ConstantRateMode(uint32_t targetRateUlHr);
+// IT IS CONSTRUCTOR THE IMPLICT CAN BE DIRECTLY STORD BUT IT GET BUG IN EXPLICIT CANT BE DIRCTLY STORS IF WE GIVE 100000 IT STORES ON VARIABLE AS TARGETRATEULHR  
+explicit ConstantRateMode(uint32_t targetRateUlHr);
+//SETRATE  IT GETS BY USER 
     void setRate(uint32_t rateUlHr);
+// THIS FUCTIO STORES TARET RATE 
     uint32_t getTargetRate() const;
 
 protected:
+ // IT ONLY CALLS BY RUN() FUNCTION NOT DIRECTLY BY MAIN.CPP THATS WHY IT IS PROTECTED  WHY OVERRIDE MEANS SAME FUNCTION BUT THE WORKING DIFFERENT BASED ON CONSTANYT AND LINEAR  
     uint32_t computeTargetRate() override;
     void applyRate(uint32_t rate) override;
-
+ // IT IS THE THE VARIABLE IT STORES THE TARGET RATE VALUE 
 private:
     uint32_t targetRate_;
 };
