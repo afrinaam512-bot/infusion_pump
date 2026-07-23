@@ -1,7 +1,9 @@
 #include "InfusionMode.hpp"
 // BY USING THIS FILE WE CAN ABLE TO INCLUSE DECLARING FUNCTIONS OTHERWISE THE IT DOESNT KNOW WHAT INFUSION MODE IS?
 
-// COSTRUCTOR AUTOMATICALLY CALLS AND INITIALLIZES VARIABLE WITH PARAMETERS
+// Constructor.
+// It is automatically called when an object of InfusionMode or its child class is created.
+// It initializes the member variables.
 InfusionMode::InfusionMode()
 // NOW THW CURRENT RATE IS 0
 : currentRate_(0)
