@@ -1,11 +1,15 @@
+
+// this file bee included only once 
+
 #pragma once
 #include <cstdint>
-
+// class name occlusionMOnitor  :: 
 enum class OcclusionStatus {
     CLEAR,
     WARNING,
     ALARM
 };
+// satus :: 
 
 class OcclusionMonitor {
 public:
