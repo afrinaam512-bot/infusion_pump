@@ -13,7 +13,7 @@ InfusionMode::InfusionMode()
     , alarmCount_(0) {}
 // THIS RUN() CALLAS MAIN.CPP THE ONLY IT RUNS  LIKE ACTIVE MODE 
 void InfusionMode::run() 
- WHILE RUNNING IS TRUE THE PUMP IS STARTED 
+// WHILE RUNNING IS TRUE THE PUMP IS STARTED 
 {
     running_ = true;
     //  IT GETTING TARGET RAETE 
