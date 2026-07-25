@@ -165,19 +165,25 @@ static uint32_t read_lps22hb_pressure(void) // IT READ PRESSURE FROM SENSOR {
 //static → The object exists for the entire program execution.ConstantRateMode → This is the class (data type).
 //constantMode → This is the object name
 //(100000) → Calls the constructor with 100000 µL/hr.
-static ConstantRateMode  constantMode(100000);
-static LinearRampMode    rampMode(10000, 500000, 10000);
-static OcclusionMonitor  occlusionMonitor;
-static InfusionMode*     activeMode    = &constantMode;
-static bool              useRealSensor = true;
-
+static ConstantRateMode  constantMode(100000);// its the class that create s object that call the constructor which initializes the targetrate_
+static LinearRampMode    rampMode(10000, 500000, 10000);// lits the class that creates the ramp mode object with calls constructor that passes stsrtrate_,endrate_,stepsize_
+static OcclusionMonitor  occlusionMonitor;// ccalls class with object no paramete so it initialized  currentpressure_, status_, alarmcount_
+static InfusionMode*     activeMode    = &constantMode;// it uses a pointer the pointer doesnt stores the object name its  
+//stores the address of the object  here infusion mode object address is stored in   activmode variable here the infusionmode variable is constantMode and linearmode  
+static bool              useRealSensor = true;// it returns real data or simulateed data 
+// this is a preprocessor macro evry time it stores 32 charcters // the maximum number of characters that command contains 
 // ── UART buffer ───────────────────────────────────
 #define UART_BUF_SIZE 32
-static char   uart_buf[UART_BUF_SIZE];
+// it stores the uart  character 
+static char   uart_buf[UART_BUF_SIZE]; 
+//keep track of where the next character to be stored  
 static uint8_t uart_buf_pos = 0;
+// pointer to the uart hardware device that obtain from the zephyr 
 static const struct device *uart_dev;
-
-// ── Encoder Helper Functions ──────────────────────
+// how the uart means it is communication interface that share the to the two devices one character at a time// whenever the START IS TYPE 
+// IT GOES ONE BY ONE CHARACTER THAT STORED N AN UART_BUF  IT DENDS TO UART STM32 HARDWARE THEN ZEPHYR UART DRIVER UART INTERRECPT, STORES CHARACTER IN UART_BUF[]
+// WHEN/n  enter is reciver it goes into command processor funtion that startfunction pump state machine motor starts 
+// ── Encoder Helper Functions ──────────────────────//These helper functions are responsible for reading the encoder position from the Zephyr QDEC driver.
 static int32_t readEncoderRaw(void) {
     if (!qdec_dev) return 0;
     struct sensor_value val;
@@ -185,7 +191,6 @@ static int32_t readEncoderRaw(void) {
     sensor_channel_get(qdec_dev, SENSOR_CHAN_ROTATION, &val);
     return val.val1; // Degrees 0-359
 }
-
 static void updateEncoderPosition(void) {
     int32_t raw = readEncoderRaw();
     if (!g_encoderInitialized) {
