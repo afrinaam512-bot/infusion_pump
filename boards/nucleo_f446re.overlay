@@ -1,5 +1,6 @@
 /{
-    aliases {
+// An alias is a short name assigned to a hardware node in the Device Tree
+aliases {
         led0        = &green_led;
         motor-step  = &motor_step;
         motor-dir   = &motor_dir;
