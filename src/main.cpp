@@ -156,10 +156,15 @@ static uint32_t read_lps22hb_pressure(void) // IT READ PRESSURE FROM SENSOR {
     }
 // THESE COMBINES THE 24 BIT RAW VALUE 2^24
     int32_t raw = ((int32_t)buf[2] << 16) | ((int32_t)buf[1] << 8) | (int32_t)buf[0];
+// IF SUPPOSEIT RETUS BUF[1]=0X3F,0X56,0X45 COBINES RAW VALUE  = 0X3F5645 IT RETURNS THE DECIMAL AS raw = 0x3F5800
+//Decimal = 4,151,296 IT IIS NOT PRESSUREHPA  VALUE IT A RAW  PRESSURE VALUE THAT NEED TO DIVIDE BY 4096 IT GIVEN BY DATA SHEET  THEN ONLY WE GET AS 1013 HPA 
     return (uint32_t)(raw / 4096);
 }
 
 // ── Static instances — no heap ───────────────────
+//static → The object exists for the entire program execution.ConstantRateMode → This is the class (data type).
+//constantMode → This is the object name
+//(100000) → Calls the constructor with 100000 µL/hr.
 static ConstantRateMode  constantMode(100000);
 static LinearRampMode    rampMode(10000, 500000, 10000);
 static OcclusionMonitor  occlusionMonitor;
