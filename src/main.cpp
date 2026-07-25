@@ -3,6 +3,8 @@
 #include <zephyr/drivers/uart.h>
 #include <zephyr/drivers/gpio.h>
 #include <zephyr/drivers/i2c.h>
+// This header provides the Zephyr Sensor API, which is used to access the STM32 QDEC driver
+// and read the encoder count.
 #include <zephyr/drivers/sensor.h>
 #include <zephyr/sys/printk.h>
 
@@ -31,6 +33,7 @@ static const struct gpio_dt_spec buzzer =
 
 // ── Alarm helpers ─────────────────────────────────
 static void alarm_on(void) {
+     // these are zephyr api the fuction calls api then gpio driver then stm32  hardware 
     gpio_pin_set_dt(&led,    1);
     gpio_pin_set_dt(&buzzer, 1);
 }
@@ -40,50 +43,118 @@ static void alarm_off(void) {
     gpio_pin_set_dt(&buzzer, 0);
 } 
 
-// ── Encoder globals & Physical Constants ──────────
-static const struct device *qdec_dev;
-static int32_t  g_encoderRawPrev     = 0;
-static bool     g_encoderInitialized = false;
-static int32_t  g_lastEncoderCount   = 0; // Cumulative degrees tracked
-static uint32_t userFlowRateUlHr  = 100000; // default 100mL/hr
-static uint32_t userDoseTargetUL  = 0;      // 0 = no target
-#define ENCODER_DEG_PER_REV  360
-#define UL_PER_REV           3200
 
+
+// ── Encoder globals & Physical Constants ──────────
+//static → Variable is accessible only within main.cpp.
+//const → The device object itself cannot be modified.
+//struct device → Zephyr's device structure representing a hardware device.
+
+//* → Pointer to the device.
+//t stores the address of the QDEC (Quadrature Decoder) device.
+static const struct device *qdec_dev;
+//Stores the previous raw encoder count.
+static int32_t  g_encoderRawPrev     = 0;
+//after the first encoder is intialized then only it gets true before it running it retuuns false
+static bool     g_encoderInitialized = false;
+//it stores the last total  encoder count 
+static int32_t  g_lastEncoderCount   = 0; // Cumulative degrees tracked
+// it stores Stores the flow rate set by the user. = 100ml/hr 
+static uint32_t userFlowRateUlHr  = 100000; // default 100mL/hr
+// no dose rtaregt is set yet now 
+static uint32_t userDoseTargetUL  = 0;// 0 = no target
+//This is a macro, not a variable. for completerotation in degrees as 360  
+#define ENCODER_DEG_PER_REV  360
+// it delivers 3.2 ml for full rotation 
+#define UL_PER_REV           3200
+//Counts how many motor steps have been generated.
 static uint32_t motorTicks      = 0;
+//Stores the expected volume.
+//This is the theoretical volume based on the number of motor steps.
 static uint32_t expectedVolumeUL = 0;
+//Stores the actual delivered volume.
+//It is calculated using the encoder pulses.
 static uint32_t actualVolumeUL    = 0;
+// IT STORES CORRECTION VOLUME AND IT COMPENSATE DIFFERENCE BETWEEN  EXPECTED AND ACTUAL 
 static uint32_t volumeOffset     = 0;
+//Stores the last time the ramp speed was updated.
 static uint32_t lastRampUpdateMs = 0;
+//Stores the maximum ramp flow rate. 500ML
 static uint32_t userMaxRampRateUlHr = 500000;
+
+
+Power ON
+    │
+    ▼
+Initialize I2C
+    │
+    ▼
+Initialize LPS22HB
+    │
+    ▼
+Check WHO_AM_I register
+    │
+    ▼
+Configure sensor
+    │
+    ▼
+Read pressure periodically
+    │
+    ▼
+Pressure (hPa)
+    │
+    ▼
+Occlusion detection
 // ── I2C / LPS22HB ────────────────────────────────
 static const struct device *i2c_dev;
+//This is the I²C address of the pressure sensor.//When the STM32 wants to communicate with the LPS22HB, it sends:
 #define LPS22HB_ADDR         0x5C
+//This is a register address inside the sensor.
 #define LPS22HB_PRESS_OUT_XL 0x28
+//This is another register.
+//Its purpose is to identify the sensor.
+//Reading this register should return
 #define LPS22HB_WHO_AM_I     0x0F
+//This is the control register.
+//Writing values into this register configures the sensor.
 #define LPS22HB_CTRL_REG1    0x10
+//Sensor not initialized.//  when it is intialized it gets true 
 static bool lps22hb_ready = false;
-
-static bool lps22hb_init(void) {
+// this function initializes the sensor it did three jobs detect sensor configure sensor return sucess / fsilure  
+static bool lps22hb_init(void) 
+//Creates an 8-bit variable.
+//It will store the value read from the WHO_AM_I register.
     uint8_t who_am_i = 0;
+//Stores
+//0x0F
+//This tells the sensor
+//Read register 0x0F
     uint8_t reg = LPS22HB_WHO_AM_I;
+// this is a zephyr i2c api (i2c_write_read) it performs read and write function 
+// it write 0 x 0F > LPSR22HB > RETURNS > 0XB1 IT STORED IN AN WHO AM I 
+// IF THE CONNECTION FILE LPS NOT FOUND 
     if (i2c_write_read(i2c_dev, LPS22HB_ADDR, &reg, 1, &who_am_i, 1) != 0) {
         printk("LPS22HB not found!\n");
         return false;
     }
     printk("LPS22HB WHO_AM_I: 0x%02X\n", who_am_i);
+// IT CREATES TWO BYES REGISTER ADRES  AS 0X10 AND OTHER BYTE AS CTRL REG1 0X30 
     uint8_t cfg[2] = {LPS22HB_CTRL_REG1, 0x30};
+// IT WRITES 0X3O INTO CTRL REG
     i2c_write(i2c_dev, cfg, 2, LPS22HB_ADDR);
     return (who_am_i == 0xB1);
-}
+}//"The LPS22HB stores each pressure measurement in three 8-bit registers: 
+//PRESS_OUT_XL (0x28), PRESS_OUT_L (0x29), and PRESS_OUT_H (0x2A). Since each register is 8 bits, the total pressure data size is 24 bits (3 × 8 = 24). 
+    //My code reads these three bytes over I²C and combines them into a single 24-bit raw pressure value before converting it to pressure in hPa."
 
-static uint32_t read_lps22hb_pressure(void) {
-    if (!lps22hb_ready) return 1013;
-    uint8_t buf[3];
-    uint8_t reg = LPS22HB_PRESS_OUT_XL | 0x80;
+static uint32_t read_lps22hb_pressure(void) // IT READ PRESSURE FROM SENSOR {
+    if (!lps22hb_ready) return 1013;// IF THE SENSOR NOT READ IT RETURS 1013 BCZ IT A ATMOSPHERIC NORMAL VALUE 
+    uint8_t buf[3];//Creates a buffer of three bytes because the pressure value is stored across three registers.
+    uint8_t reg = LPS22HB_PRESS_OUT_XL | 0x80;//0X 80 ENABLES AUTO INCREAMET 
     if (i2c_write_read(i2c_dev, LPS22HB_ADDR, &reg, 1, buf, 3) != 0) {
         return 1013;
     }
+// THESE COMBINES THE 24 BIT RAW VALUE 2^24
     int32_t raw = ((int32_t)buf[2] << 16) | ((int32_t)buf[1] << 8) | (int32_t)buf[0];
     return (uint32_t)(raw / 4096);
 }
