@@ -184,14 +184,15 @@ static const struct device *uart_dev;
 // IT GOES ONE BY ONE CHARACTER THAT STORED N AN UART_BUF  IT DENDS TO UART STM32 HARDWARE THEN ZEPHYR UART DRIVER UART INTERRECPT, STORES CHARACTER IN UART_BUF[]
 // WHEN/n  enter is reciver it goes into command processor funtion that startfunction pump state machine motor starts 
 // ── Encoder Helper Functions ──────────────────────//These helper functions are responsible for reading the encoder position from the Zephyr QDEC driver.
-static int32_t readEncoderRaw(void) {
-    if (!qdec_dev) return 0;
-    struct sensor_value val;
-    sensor_sample_fetch(qdec_dev);
-    sensor_channel_get(qdec_dev, SENSOR_CHAN_ROTATION, &val);
+static int32_t readEncoderRaw(void) { // this functonly used in main file noo any other // it reads the encoder raw data 
+    if (!qdec_dev) return 0;// later it get initialized if the encoderis not then it reyurn 0 
+    struct sensor_value val;// it is a zeohyr structure // it stores sensor data // val is the object 
+    sensor_sample_fetch(qdec_dev);//This is a Zephyr Sensor API function it tells the qdec "Read the latest value from the hardware.
+    sensor_channel_get(qdec_dev, SENSOR_CHAN_ROTATION, &val);//this ask the driver for getting the rotation
     return val.val1; // Degrees 0-359
 }
 static void updateEncoderPosition(void) {
+    
     int32_t raw = readEncoderRaw();
     if (!g_encoderInitialized) {
         g_encoderRawPrev     = raw;
