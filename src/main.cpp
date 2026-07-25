@@ -11,9 +11,14 @@
 #include "LinearRampMode.hpp"
 #include "EncoderVolumeTracker.hpp"
 #include "OcclusionMonitor.hpp"
-
+// this gpio_dt_spec ia a zephyr structur ehat stores the all information about the gpio pin 
+// struct - it is a user defined data type that groups multiple variable togtther
+//const - the variable value cannot be modified after the  once it is created since the led is never changeable   
+//static is a global variable in.cpp file  only this maincpp can access it 
+// led- this a simpple variable name 
 // ── GPIO specs ────────────────────────────────────
 static const struct gpio_dt_spec led =
+//It searches the Device Tree for the alias named led0.
     GPIO_DT_SPEC_GET(DT_ALIAS(led0), gpios);
 static const struct gpio_dt_spec step_pin =
     GPIO_DT_SPEC_GET(DT_ALIAS(motor_step), gpios);
@@ -33,7 +38,7 @@ static void alarm_on(void) {
 static void alarm_off(void) {
     gpio_pin_set_dt(&led,    0);
     gpio_pin_set_dt(&buzzer, 0);
-}
+} 
 
 // ── Encoder globals & Physical Constants ──────────
 static const struct device *qdec_dev;
@@ -342,7 +347,25 @@ static void uart_cb(const struct device *dev, void *user_data) {
 // ── Main ──────────────────────────────────────────
 int main(void) {
     printk("Infusion Pump Starting...\n");
-
+START command
+      │
+      ▼
+main() loop
+      │
+      ▼
+gpio_pin_set_dt(step_pin, 1)
+      │
+      ▼
+STEP pulse sent to TMC2209
+      │
+      ▼
+Stepper motor moves one step
+      │
+      ▼
+Encoder rotates
+      │
+      ▼
+Volume is delivered
     gpio_pin_configure_dt(&en_pin, GPIO_OUTPUT_INACTIVE);
     gpio_pin_configure_dt(&led, GPIO_OUTPUT_INACTIVE);
     gpio_pin_configure_dt(&buzzer, GPIO_OUTPUT_INACTIVE);
