@@ -189,16 +189,19 @@ static int32_t readEncoderRaw(void) { // this functonly used in main file noo an
     struct sensor_value val;// it is a zeohyr structure // it stores sensor data // val is the object 
     sensor_sample_fetch(qdec_dev);//This is a Zephyr Sensor API function it tells the qdec "Read the latest value from the hardware.
     sensor_channel_get(qdec_dev, SENSOR_CHAN_ROTATION, &val);//this ask the driver for getting the rotation
-    return val.val1; // Degrees 0-359
+    return val.val1; // It gets current encder angle
 }
+This function is one of the most important functions in your encoder module. 
+//It converts the current encoder angle into the total angle the motor has rotated, even when the encoder wraps from 359° back to 0°.
+// it does not return anything 
 static void updateEncoderPosition(void) {
-    
+    // raw it stores the current angle 
     int32_t raw = readEncoderRaw();
     if (!g_encoderInitialized) {
         g_encoderRawPrev     = raw;
         g_encoderInitialized = true;
         return;
-    }
+    }// 
     int32_t delta = raw - g_encoderRawPrev;
 
     // Handle degree boundary rollover at 360
