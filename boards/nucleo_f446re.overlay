@@ -1,5 +1,5 @@
 /{
-// An alias is a short name assigned to a hardware node in the Device Tree
+// An alias is a short name assigned to a hardware node in the Device Tree instaed it eriting green led we using shret name as led0
 aliases {
         led0        = &green_led;
         motor-step  = &motor_step;
@@ -8,25 +8,29 @@ aliases {
         alarm-buzz  = &buzzer_out;
     };
 
+//leed gpio initialization 
     leds {
         compatible = "gpio-leds";
         green_led: led_0 {
-            gpios = <&gpioa 6 GPIO_ACTIVE_HIGH>;
+// gpio controller port a pin 6 and the state is active            
+gpios = <&gpioa 6 GPIO_ACTIVE_HIGH>;
             label = "Green LED";
         };
     };
+// same as led 
  buzzers {
         compatible = "gpio-leds";
         buzzer_out: buzzer_0 {
             gpios = <&gpiob 0 GPIO_ACTIVE_HIGH>;
-            label = "Piezo Buzzer";
+// human readable             
+label = "Piezo Buzzer";
         };
     };
 
 
 
 
-
+// same as led
     motor {
         compatible = "gpio-leds";
         motor_step: motor_step_0 {
@@ -44,32 +48,40 @@ aliases {
 
     };
 };
+ // itd necessary for lps22hb  without ths i2c is disbled 
    &i2c1 {
     status = "okay";
+ the speed of it s is 400 khz
     clock-frequency = <I2C_BITRATE_FAST>;
 };
-
+// this is for encoder initailization 
 &pinctrl {
+// timer 2 channel 1 port a pin 0 
     tim2_ch1_pa0: tim2_ch1_pa0 {
         pinmux = <STM32_PINMUX('A', 0, AF1)>;
-        bias-pull-up;
+// it is the pull up resistor  
+bias-pull-up;
     };
+// it foe b chanel
     tim2_ch2_pa1: tim2_ch2_pa1 {
         pinmux = <STM32_PINMUX('A', 1, AF1)>;
         bias-pull-up;
     };
 };
 
-
+this enable stm 32 timer 2 enables 
 &timers2 {
     status = "okay";
     st,prescaler = <0>;
-
+no prescaing 
+//This creates a Quadrature Decoder (QDEC) node using Timer 2.
   qdec: qdec {
         compatible = "st,stm32-qdec";
+// this tells the zephyr use the qdec driver for this hardwaer
         status = "okay";
         pinctrl-0 = <&tim2_ch1_pa0 &tim2_ch2_pa1>;
         pinctrl-names = "default";
+// this tells the driver for full rotation it generates 600 pulses 
         st,counts-per-revolution = <600>;
     };
 };
