@@ -192,8 +192,11 @@ static int32_t readEncoderRaw(void) { // this functonly used in main file noo an
     return val.val1; // It gets current encder angle
 }
 This function is one of the most important functions in your encoder module. 
+
 //It converts the current encoder angle into the total angle the motor has rotated, even when the encoder wraps from 359° back to 0°.
 // it does not return anything 
+//Encoder,Current angle =125°,readEncoderRaw(),raw=125Previous=120,delta=125-120delta=5°Wrap correction?NoAbsolute value5°Total count +=5°Save Previous =125°
+
 static void updateEncoderPosition(void) {
     // raw it stores the current angle 
     int32_t raw = readEncoderRaw();
@@ -201,23 +204,29 @@ static void updateEncoderPosition(void) {
         g_encoderRawPrev     = raw;
         g_encoderInitialized = true;
         return;
-    }// 
+    }// the calculate the 120 - 125  current - previous 
     int32_t delta = raw - g_encoderRawPrev;
-
+//Previous =359°
+//Current =2°// delta = 359 - 2 = 357 but it is impossile that  then 357>360/2=180 then the program assumes the encoder wrapped in the opposite direction.
+    //Now the movement is correctly interpreted as 3° in the reverse direction.
     // Handle degree boundary rollover at 360
     if (delta > ENCODER_DEG_PER_REV / 2)
-        delta -= ENCODER_DEG_PER_REV;
-    if (delta < -ENCODER_DEG_PER_REV / 2)
+        delta -= ENCODER_DEG_PER_REV;// -357+360=3 deg
+    if (delta < -ENCODER_DEG_PER_REV / 2) //the movement is correct 
         delta += ENCODER_DEG_PER_REV;
-
+    // why use 180 means half the rotation largest reasonable change between two consecutive readings.
     // Accumulate running absolute delta tracking distance
     if (delta < 0) delta = -delta;
-    g_lastEncoderCount += delta;
+    g_lastEncoderCount += delta;//This variable stores the total accumulated angular movement.
     g_encoderRawPrev    = raw;
 }
+//. After updateEncoderPosition() calculates the total angle rotated, these two functions:
 
+//Convert the angle into infused volume.
+//Reset the encoder when starting a new infusion.
 static uint32_t getActualVolumeUL(void) {
     // 360 degrees = 3200 uL
+    // volume offset = 1000ul , last encoder cpount is deg , ul per rev =n3200 , encoder deg 600
     return volumeOffset + (uint32_t)((int64_t)g_lastEncoderCount * UL_PER_REV / ENCODER_DEG_PER_REV);
 }
 
@@ -227,6 +236,7 @@ static void resetEncoderPosition(void) {
 }
 
 // ── Process command ───────────────────────────────
+// the process_command funcion it store the point in the user command // if user types START thenn cmd = start ;
 static void process_command(const char* cmd) {
     printk("CMD: %s\n", cmd);
 
