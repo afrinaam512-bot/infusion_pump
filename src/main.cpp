@@ -442,25 +442,6 @@ static void uart_cb(const struct device *dev, void *user_data) {
 // ── Main ──────────────────────────────────────────
 int main(void) {
     printk("Infusion Pump Starting...\n");
-START command
-      │
-      ▼
-main() loop
-      │
-      ▼
-gpio_pin_set_dt(step_pin, 1)
-      │
-      ▼
-STEP pulse sent to TMC2209
-      │
-      ▼
-Stepper motor moves one step
-      │
-      ▼
-Encoder rotates
-      │
-      ▼
-Volume is delivered
     gpio_pin_configure_dt(&en_pin, GPIO_OUTPUT_INACTIVE);
     gpio_pin_configure_dt(&led, GPIO_OUTPUT_INACTIVE);
     gpio_pin_configure_dt(&buzzer, GPIO_OUTPUT_INACTIVE);
