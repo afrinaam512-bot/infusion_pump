@@ -41,7 +41,12 @@ static void alarm_on(void) {
 static void alarm_off(void) {
     gpio_pin_set_dt(&led,    0);
     gpio_pin_set_dt(&buzzer, 0);
-} 
+} cd ~/zephyrproject
+source .venv/bin/activate
+source zephyr/zephyr-env.sh
+export ZEPHYR_SDK_INSTALL_DIR=$HOME/zephyr-sdk-0.16.8
+west build -p always -b nucleo_f446re infusion_pump
+west flash --build-dir ~/zephyrproject/build
 
 
 
@@ -570,4 +575,9 @@ if (userDoseTargetUL > 0 &&
     }
 
     return 0;
-}
+}cd ~/zephyrproject
+source .venv/bin/activate
+source zephyr/zephyr-env.sh
+export ZEPHYR_SDK_INSTALL_DIR=$HOME/zephyr-sdk-0.16.8
+west build -p always -b nucleo_f446re infusion_pump
+west flash --build-dir ~/zephyrproject/build
